@@ -45,6 +45,13 @@ end
 function Player:update(...)
     super.update(self, ...)
 
+    if Input.pressed("e") then
+        self:setAnimation("battle/idle", 0.25, true)
+    end
+    if Input.pressed("q") then
+        self:resetSprite()
+    end
+    
     local data = receiveFromServer(client)
     if data then
         if data.command == "update" then
@@ -80,12 +87,33 @@ function Player:update(...)
                     self.other_players[username] = nil
                 end
             end
+        elseif data.command == "anim_sync" then
+            if data.subCommand == "sprite" then
+                for _, username in ipairs(data.players) do
+                    if self.other_players[username] then
+                        self.other_players[username]:setSprite(data.animationData)
+                    end
+                end
+            elseif data.subCommand == "anim" then
+                for _, username in ipairs(data.players) do
+                    if self.other_players[username] then
+                        self.other_players[username]:setAnimation(data.animationData)
+                    end
+                end
+            elseif data.subCommand == "reset" then
+                for _, username in ipairs(data.players) do
+                    if self.other_players[username] then
+                        self.other_players[username]:resetSprite()
+                    end
+                end
+            end
         end
     end
 
     -- Send client's own update
     local updateMessage = {
-        command = "update",
+        command = "world",
+        subCommand = "update",
         username = self.name,
         x = self.x,
         y = self.y,
@@ -96,6 +124,35 @@ function Player:update(...)
 
     sendToServer(client, updateMessage)
 
+    if self.sprite.sprite ~= "walk" and self.animation_off ~= false then
+        self.animation_off = false
+        if self.sprite.anim then
+            msg = {
+                command = "anim_sync",
+                subCommand = "anim",
+                username = self.name,
+                animationData = self.sprite.anim
+            }
+        else
+            msg = {
+                command = "anim_sync",
+                subCommand = "sprite",
+                username = self.name,
+                animationData = self.sprite.sprite
+            }
+        
+        end
+        sendToServer(client, msg)
+    elseif self.animation_off == false and self.sprite.sprite == "walk" then
+        self.animation_off = true
+        local msg = {
+            command = "anim_sync",
+            subCommand = "reset",
+            username = self.name
+        }
+        sendToServer(client, msg)
+    end
+
     if self.other_players then
         local playersList = {}
         for username, _ in pairs(self.other_players) do
@@ -103,7 +160,8 @@ function Player:update(...)
         end
 
         local inMapMessage = {
-            command = "inMap",
+            command = "world",
+            subCommand = "inMap",
             username = self.name,
             players = playersList
         }
