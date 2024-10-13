@@ -35,14 +35,11 @@ function Player:init(...)
     -- Register player with username and actor
     local registerMessage = {
         command = "register",
+        uuid = Game:getFlag("GCSN_UUID"), -- server will generate this if it's nil
         username = self.name,
         actor = self.actor.id or "kris"  -- Include actor
     }
     sendToServer(client, registerMessage)
-    local data = receiveFromServer(client)
-    if data and data.command == "register" then
-        self.uuid = data.uuid
-    end
 end
 
 
@@ -56,10 +53,13 @@ function Player:update(...)
     -- Receive data from the server (if any)
     local data = receiveFromServer(client)
     if data then
-        if data.command == "update" then
+        if data.command == "register" then
+            self.uuid = data.uuid
+            Game:setFlag("GCSN_UUID", self.uuid)
+        elseif data.command == "update" then
             for _, playerData in ipairs(data.players) do
-                if playerData.username ~= self.name then
-                    local other_player = Game.world.other_players[playerData.username]
+                if playerData.uuid ~= self.uuid then
+                    local other_player = Game.world.other_players[playerData.uuid]
 
                     if other_player then
                         -- Smoothly interpolate position update
@@ -89,7 +89,7 @@ function Player:update(...)
                         other_player = otherplr
                         other_player.layer = Game.world.map.object_layer
                         Game.world:addChild(other_player)
-                        Game.world.other_players[playerData.username] = other_player
+                        Game.world.other_players[playerData.uuid] = other_player
                         -- Set initial facing direction
                         other_player:setFacing(playerData.direction)
                     end
@@ -97,9 +97,9 @@ function Player:update(...)
             end
         elseif data.command == "RemoveOtherPlayersFromMap" then
             for _, username in ipairs(data.players) do
-                if Game.world.other_players[username] then
-                    Game.world.other_players[username]:remove()
-                    Game.world.other_players[username] = nil
+                if Game.world.other_players[uuid] then
+                    Game.world.other_players[uuid]:remove()
+                    Game.world.other_players[uuid] = nil
                 end
             end
         end
@@ -125,13 +125,14 @@ function Player:update(...)
     -- Throttle current players list packets
     if currentTime - lastPlayerListTime >= THROTTLE_INTERVAL then
         local playersList = {}
-        for username, _ in pairs(Game.world.other_players) do
-            table.insert(playersList, username)
+        for uuid, _ in pairs(Game.world.other_players) do
+            table.insert(playersList, uuid)
         end
 
         local currentPlayersMessage = {
             command = "world",
             subCommand = "inMap",
+            uuid = self.uuid,
             username = self.name,
             players = playersList
         }
