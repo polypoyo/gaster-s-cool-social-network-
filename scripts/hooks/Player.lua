@@ -9,7 +9,7 @@ local function sendToServer(client, message)
     client:send(encodedMessage .. "\n")
 end
 
-local client = assert(socket.connect("localhost", 25574))
+local client = assert(socket.connect("serveo.net", 25574))
 client:settimeout(0)
 
 function Player:init(...)

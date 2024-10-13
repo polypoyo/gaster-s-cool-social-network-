@@ -17,7 +17,7 @@ its open source for a damn reason
 ------------------------------------------
 -- Running the server
 
-drag the folder onto love2d
+drag the server folder onto love2d
 
 like how you run KRISTAL
 
