@@ -101,7 +101,7 @@ function Player:update(...)
                 end
             end
         elseif data.command == "RemoveOtherPlayersFromMap" then
-            for _, username in ipairs(data.players) do
+            for _, uuid in ipairs(data.players) do
                 if Game.world.other_players[uuid] then
                     Game.world.other_players[uuid]:remove()
                     Game.world.other_players[uuid] = nil
