@@ -51,19 +51,24 @@ end
 function Nametag:draw()
     love.graphics.setFont(self.font)
 
+    love.graphics.scale(0.5, 0.5)
+Draw.setColor(0, 0, 0, 1)
+for x=-1, 1 do
+for y=-1, 1 do
+love.graphics.print(self.name, self.length *-self.length/2 + (x*2), -self.pc.actor.height/2 *2 + (y*2))
+end
+end
+
     if self.connected == 1 then
         Draw.setColor(0, 0, 1, 1)
-    end
-
-    if self.connected == 2 then
+    elseif self.connected == 2 then
         Draw.setColor(0, 1, 0, 1)
-    end
-
-    if self.connected == 3 then
+    elseif self.connected == 3 then
         Draw.setColor(1, 0, 0, 1)
+else
+Draw.setColor(1, 1, 1, 1)
     end
 
-    love.graphics.scale(0.5, 0.5)
     love.graphics.print(self.name, self.length *-self.length/2, -self.pc.actor.height/2 *2)
 
     Draw.setColor(1, 1, 1, 1)
