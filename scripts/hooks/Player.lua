@@ -79,11 +79,11 @@ function Player:update(...)
                         end
                     else
                         local otherplr
-                        local success, result = pcall(Other_Player, playerData.actor, playerData.x, playerData.y, playerData.username)
+                        local success, result = pcall(Other_Player, playerData.actor, playerData.x, playerData.y, playerData.username, playerData.uuid)
                         if success then
                             otherplr = result
                         else
-                            otherplr = Other_Player("dummy", playerData.x, playerData.y, playerData.username)
+                            otherplr = Other_Player("dummy", playerData.x, playerData.y, playerData.username, playerData.uuid)
                         end
                         -- Create a new player if it doesn't exist
                         other_player = otherplr
