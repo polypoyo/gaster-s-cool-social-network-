@@ -1,196 +1,22 @@
+Socket = require("socket")
+JSON = require("json")
+---@type Server
+local Server = require("server")
 
-local socket = require("socket")
-local json = require("json")
-
-local server = assert(socket.bind("localhost", 25574))
-local ip, port = server:getsockname()
-server:settimeout(0)
-print("Server started on " .. ip .. ":" .. port)
-
-local clients = {}
-local players = {}
-local updateInterval = 0.1
-local lastUpdateTime = socket.gettime()
-local TIMEOUT_THRESHOLD = 20
-
-
-math.randomseed(os.time())
-
-local random = math.random
-local function uuid()
-    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    return string.gsub(template, '[xy]', function (c)
-        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
-        return string.format('%x', v)
-    end)
-end
-
---print(uuid())
-
--- Remove disconnected player
-local function removePlayer(client)
-    for i, c in ipairs(clients) do
-        if c == client then
-            table.remove(clients, i)
-            break
-        end
-    end
-    for id, player in pairs(players) do
-        if player.client == client then
-            print("Player " .. players[id].username .. " removed due to disconnection.")
-            players[id] = nil
-            break
-        end
-    end
-end
-
--- Check for inactive players
-local function checkForInactivePlayers()
-    local currentTime = socket.gettime()
-    for id, player in pairs(players) do
-        if currentTime - player.lastUpdate >= TIMEOUT_THRESHOLD then
-            removePlayer(player.client)
-        end
-    end
-end
-
--- Send updates to clients
-local function sendUpdatesToClients()
-    local updates = {}
-
-    -- Collect updates per map
-    for id, player in pairs(players) do
-        if player.client then
-            updates[player.map] = updates[player.map] or {}
-            table.insert(updates[player.map], {
-                username = player.username,
-                uuid = id,
-                x = player.x,
-                y = player.y,
-                actor = player.actor,
-                sprite = player.sprite,
-                map = player.map,
-                direction = player.direction
-            })
-        end
-    end
-
-    -- Send updates only to players on the same map
-    for id, player in pairs(players) do
-        if player.client and updates[player.map] then
-            local updateMessage = {
-                command = "update",
-                players = updates[player.map]
-            }
-            player.client:send(json.encode(updateMessage) .. "\n")
-        end
-    end
-end
-
--- Handle client messages
-local function processClientMessage(client, data)
-    local message = json.decode(data)
-    local command = message.command
-    local subCommand = message.subCommand
-
-    if command == "register" then
-        local id = message.uuid or uuid()
-        players[id] = {
-            username = message.username,
-            x = 0, y = 0, actor = message.actor or "dummy",
-            sprite = message.sprite or "walk", 
-            map = message.map or "default", 
-            uuid = id,
-            client = client, lastUpdate = socket.gettime(), direction = "down"
-        }
-        print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. players[id].actor)
-        client:send(json.encode{
-            command = "register",
-            uuid = id
-        }.. "\n")
-
-    elseif command == "world" then 
-        if subCommand == "update" then
-            local player = players[message.uuid]
-            if player then
-                player.username = message.username
-                player.x = message.x
-                player.y = message.y
-                player.map = message.map or player.map
-                player.direction = message.direction
-                player.actor = message.actor
-                player.sprite = message.sprite
-                player.lastUpdate = socket.gettime()
-            end
-        elseif subCommand == "inMap" then
-            local id = message.uuid
-            local clientPlayers = message.players
-            local player = players[id]
-
-            if player then
-                local actualMapPlayers = {}
-                for otherId, otherPlayer in pairs(players) do
-                    if otherPlayer.map == player.map then
-                        actualMapPlayers[otherId] = true
-                    end
-                end
-
-                -- Determine which players to remove
-                local playersToRemove = {}
-                for _, clientPlayer in ipairs(clientPlayers) do
-                    if not actualMapPlayers[clientPlayer] then
-                        table.insert(playersToRemove, clientPlayer)
-                    end
-                end
-
-                -- Send removal message if needed
-                if #playersToRemove > 0 then
-                    local removeMessage = {
-                        command = "RemoveOtherPlayersFromMap",
-                        players = playersToRemove
-                    }
-                    player.client:send(json.encode(removeMessage) .. "\n")
-                end
-            end
-        end
-    elseif command == "disconnect" then
-        print("Player " .. players[message.id].username .. " disconnected")
-        removePlayer(client)
-    end
-end
-
--- Main server loop
-local function main()
-    local client = server:accept()
-    if client then
-        client:settimeout(0)
-        table.insert(clients, client)
-        print("New client connected")
-    end
-
-    local readable, _, _ = socket.select(clients, nil, 0)
-    for _, client in ipairs(readable) do
-        local data, err = client:receive()
-        if data then
-            processClientMessage(client, data)
-        elseif err == "closed" then
-            removePlayer(client)
-            print("Client disconnected")
-        end
-    end
-
-    local currentTime = socket.gettime()
-    if (currentTime - lastUpdateTime) >= updateInterval then
-        sendUpdatesToClients()
-        lastUpdateTime = currentTime
-    end
-
-    -- Check for inactive players
-    checkForInactivePlayers()
-end
+---@type Server
+local server = setmetatable({},{__index = Server})
+server:start()
 
 function love.update(dt)
-    main()  -- Call the main server function once per update
+    local success, value = xpcall(server.tick, debug.traceback, server) -- Call the main server function once per update
+    if not success then
+        print(value)
+        server:shutdown(value)
+        Socket.sleep(5)
+        print("restarting...")
+        server = setmetatable({},{__index = Server})
+        server:start()
+    end
 end
 
 function love.draw()
@@ -198,7 +24,7 @@ function love.draw()
     love.graphics.printf("Connected Players:\n", 10, 10, love.graphics.getWidth(), "left")
     
     local yOffset = 30
-    for _, player in pairs(players) do
+    for _, player in pairs(server.players) do
         if player.username and player.uuid and player.map and player.actor and player.x and player.y and player.direction then
             love.graphics.printf("Player: " .. player.username ..
                                  "\nUUID: " .. player.uuid ..
