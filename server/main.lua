@@ -8,7 +8,7 @@ local server = setmetatable({},{__index = Server})
 server:start()
 
 function love.update(dt)
-    local success, value = pcall(server.tick, server) -- Call the main server function once per update
+    local success, value = xpcall(server.tick, debug.traceback, server) -- Call the main server function once per update
     if not success then
         print(value)
         server:shutdown(value)
