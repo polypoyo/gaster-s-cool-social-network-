@@ -35,10 +35,10 @@ local function removePlayer(client)
             break
         end
     end
-    for username, player in pairs(players) do
+    for id, player in pairs(players) do
         if player.client == client then
-            players[username] = nil
-            print("Player " .. username .. " removed due to disconnection.")
+            print("Player " .. players[id].username .. " removed due to disconnection.")
+            players[id] = nil
             break
         end
     end
@@ -47,7 +47,7 @@ end
 -- Check for inactive players
 local function checkForInactivePlayers()
     local currentTime = socket.gettime()
-    for username, player in pairs(players) do
+    for id, player in pairs(players) do
         if currentTime - player.lastUpdate >= TIMEOUT_THRESHOLD then
             removePlayer(player.client)
         end
@@ -59,11 +59,12 @@ local function sendUpdatesToClients()
     local updates = {}
 
     -- Collect updates per map
-    for username, player in pairs(players) do
+    for id, player in pairs(players) do
         if player.client then
             updates[player.map] = updates[player.map] or {}
             table.insert(updates[player.map], {
-                username = username,
+                username = player.username,
+                uuid = id,
                 x = player.x,
                 y = player.y,
                 actor = player.actor,
@@ -74,7 +75,7 @@ local function sendUpdatesToClients()
     end
 
     -- Send updates only to players on the same map
-    for username, player in pairs(players) do
+    for id, player in pairs(players) do
         if player.client and updates[player.map] then
             local updateMessage = {
                 command = "update",
@@ -92,16 +93,22 @@ local function processClientMessage(client, data)
     local subCommand = message.subCommand
 
     if command == "register" then
-        players[message.username] = {
+        local id = message.uuid or uuid()
+        players[id] = {
             username = message.username,
             x = 0, y = 0, actor = message.actor or "dummy",
             map = message.map or "default", 
+            uuid = id,
             client = client, lastUpdate = socket.gettime(), direction = "down"
         }
-        print("Player " .. message.username .. " registered with actor: " .. players[message.username].actor)
+        print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. players[id].actor)
+        client:send(json.encode{
+            command = "register",
+            uuid = id
+        }.. "\n")
 
     elseif command == "world" and subCommand == "update" then
-        local player = players[message.username]
+        local player = players[message.uuid]
         if player then
             player.x = message.x
             player.y = message.y
@@ -111,9 +118,9 @@ local function processClientMessage(client, data)
             player.lastUpdate = socket.gettime()
         end
     elseif command == "world" and subCommand == "inMap" then
-        local username = message.username
+        local id = message.uuid
         local clientPlayers = message.players
-        local player = players[username]
+        local player = players[id]
 
         if player then
             local actualMapPlayers = {}
@@ -141,8 +148,8 @@ local function processClientMessage(client, data)
             end
         end
     elseif command == "disconnect" then
+        print("Player " .. players[message.id].username .. " disconnected")
         removePlayer(client)
-        print("Player " .. message.username .. " disconnected")
     end
 end
 
@@ -186,13 +193,14 @@ function love.draw()
     
     local yOffset = 30
     for _, player in pairs(players) do
-        if player.username and player.map and player.actor and player.x and player.y and player.direction then
+        if player.username and player.uuid and player.map and player.actor and player.x and player.y and player.direction then
             love.graphics.printf("Player: " .. player.username ..
+                                 "\nUUID: " .. player.uuid ..
                                  "\nActor: " .. player.actor ..
                                  "\nMap: " .. player.map ..
                                  "\nX: " .. player.x .. ", Y: " .. player.y ..
                                  "\nDirection: " .. player.direction, 10, yOffset, love.graphics.getWidth(), "left")
-            yOffset = yOffset + 80
+            yOffset = yOffset + 100
         end
     end
 end

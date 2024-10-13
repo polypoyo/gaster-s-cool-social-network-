@@ -2,11 +2,12 @@
 ---@overload fun(...) : Other_Player
 local Other_Player, super = Class(Character)
 
-function Other_Player:init(chara, x, y, name)
+function Other_Player:init(chara, x, y, name, uuid)
     super.init(self, chara, x, y)
     self.name = name
     self.targetX = x
     self.targetY = y
+    self.uuid = uuid
 
     local nametag = UserNametag(self, self.name)
     self:addChild(nametag)
