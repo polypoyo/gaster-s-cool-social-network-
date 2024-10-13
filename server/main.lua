@@ -92,13 +92,19 @@ local function processClientMessage(client, data)
     local subCommand = message.subCommand
 
     if command == "register" then
+        local id = uuid()
         players[message.username] = {
             username = message.username,
             x = 0, y = 0, actor = message.actor or "dummy",
             map = message.map or "default", 
+            uuid = id,
             client = client, lastUpdate = socket.gettime(), direction = "down"
         }
-        print("Player " .. message.username .. " registered with actor: " .. players[message.username].actor)
+        print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. players[message.username].actor)
+        client:send(json.encode{
+            command = "register",
+            uuid = id
+        }.. "\n")
 
     elseif command == "world" and subCommand == "update" then
         local player = players[message.username]
@@ -186,13 +192,14 @@ function love.draw()
     
     local yOffset = 30
     for _, player in pairs(players) do
-        if player.username and player.map and player.actor and player.x and player.y and player.direction then
+        if player.username and player.uuid and player.map and player.actor and player.x and player.y and player.direction then
             love.graphics.printf("Player: " .. player.username ..
+                                 "\nUUID: " .. player.uuid ..
                                  "\nActor: " .. player.actor ..
                                  "\nMap: " .. player.map ..
                                  "\nX: " .. player.x .. ", Y: " .. player.y ..
                                  "\nDirection: " .. player.direction, 10, yOffset, love.graphics.getWidth(), "left")
-            yOffset = yOffset + 80
+            yOffset = yOffset + 100
         end
     end
 end

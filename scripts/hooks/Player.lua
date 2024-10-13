@@ -9,6 +9,16 @@ local function sendToServer(client, message)
     client:send(encodedMessage .. "\n")
 end
 
+local function receiveFromServer(client)
+    local response, err = client:receive()
+    if response then
+        local decodedResponse = json.decode(response)
+        return decodedResponse
+    elseif err ~= "timeout" then
+        print("Error: ", err)
+    end
+end
+
 local client = Game.client
 client:settimeout(0)
 
@@ -29,17 +39,13 @@ function Player:init(...)
         actor = self.actor.id or "kris"  -- Include actor
     }
     sendToServer(client, registerMessage)
-end
-
-local function receiveFromServer(client)
-    local response, err = client:receive()
-    if response then
-        local decodedResponse = json.decode(response)
-        return decodedResponse
-    elseif err ~= "timeout" then
-        print("Error: ", err)
+    local data = receiveFromServer(client)
+    if data and data.command == "register" then
+        self.uuid = data.uuid
     end
 end
+
+
 
 function Player:update(...)
     super.update(self, ...)
@@ -105,6 +111,7 @@ function Player:update(...)
             command = "world",
             subCommand = "update",
             username = self.name,
+            uuid = self.uuid,
             x = self.x,
             y = self.y,
             map = Game.world.map.id or "null",
