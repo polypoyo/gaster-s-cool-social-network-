@@ -12,6 +12,7 @@ function Nametag:init(pc, name)
 
 
     self.font = Assets.getFont("main")
+    self.smallfont = Assets.getFont("main",16)
     self.connected = false
 
 
@@ -65,6 +66,10 @@ function Nametag:draw()
 
     love.graphics.scale(0.5, 0.5)
     love.graphics.print(self.name, self.length *-self.length/2, -self.pc.actor.height/2 *2)
+    if DEBUG_RENDER and self.pc.uuid then
+        love.graphics.setFont(self.smallfont)
+        love.graphics.print(self.pc.uuid, -105, (-self.pc.actor.height/2 *2) + 32)
+    end
 
     Draw.setColor(1, 1, 1, 1)
     super.draw(self)
