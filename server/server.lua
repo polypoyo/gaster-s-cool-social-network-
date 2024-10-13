@@ -68,7 +68,6 @@ function Server:checkForInactivePlayers()
     end
 end
 
--- Send updates to clients
 function Server:sendUpdatesToClients()
     local updates = {}
 
@@ -77,8 +76,8 @@ function Server:sendUpdatesToClients()
         if player.client then
             updates[player.map] = updates[player.map] or {}
             table.insert(updates[player.map], {
-                username = player.username,
                 uuid = id,
+                username = player.username,
                 x = player.x,
                 y = player.y,
                 actor = player.actor,
@@ -89,12 +88,20 @@ function Server:sendUpdatesToClients()
         end
     end
 
-    -- Send updates only to players on the same map
+    -- Send updates only to players on the same map, excluding the player's own UUID
     for id, player in pairs(self.players) do
         if player.client and updates[player.map] then
+            -- Filter out the player's own UUID
+            local filteredUpdates = {}
+            for _, update in ipairs(updates[player.map]) do
+                if update.uuid ~= id then
+                    table.insert(filteredUpdates, update)
+                end
+            end
+
             local updateMessage = {
                 command = "update",
-                players = updates[player.map]
+                players = filteredUpdates
             }
             player.client:send(JSON.encode(updateMessage) .. "\n")
         end
