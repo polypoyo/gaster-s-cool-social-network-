@@ -5,9 +5,7 @@ function love.update(dt)
     local success, value = pcall(server.tick, server) -- Call the main server function once per update
     if not success then
         print(value)
-        for i, client in pairs(server.clients) do
-            server:removePlayer(client)
-        end
+        server:shutdown(value)
         server = require("server")
     end
 end

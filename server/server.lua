@@ -17,6 +17,17 @@ function Server:init()
     self.lastUpdateTime = self.socket.gettime()
 end
 
+function Server:shutdown(message)
+    for _, client in ipairs(self.clients) do
+        client:send(self.json.encode({
+            command = "disconnect",
+            message = message
+        }))
+        client:close()
+    end
+    self.server:close()
+end
+
 local self = Server
 
 math.randomseed(os.time())
