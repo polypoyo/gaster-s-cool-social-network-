@@ -1,12 +1,21 @@
+Socket = require("socket")
+JSON = require("json")
 ---@type Server
-local server = require("server")
+local Server = require("server")
+
+---@type Server
+local server = setmetatable({},{__index = Server})
+server:start()
 
 function love.update(dt)
     local success, value = pcall(server.tick, server) -- Call the main server function once per update
     if not success then
         print(value)
         server:shutdown(value)
-        server = require("server")
+        Socket.sleep(5)
+        print("restarting...")
+        server = setmetatable({},{__index = Server})
+        server:start()
     end
 end
 

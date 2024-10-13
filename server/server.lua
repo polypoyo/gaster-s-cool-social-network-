@@ -2,11 +2,8 @@
 local Server = {}
 local TIMEOUT_THRESHOLD = 20
 
-function Server:init()
-    self.socket = require("socket")
-    self.json = require("json")
-    
-    self.server = assert(self.socket.bind("localhost", 25574))
+function Server:start()
+    self.server = assert(Socket.bind("localhost", 25574))
     self.ip, self.port = self.server:getsockname()
     self.server:settimeout(0)
     print("Server started on " .. self.ip .. ":" .. self.port)
@@ -14,16 +11,17 @@ function Server:init()
     self.clients = {}
     self.players = {}
     self.updateInterval = 0.1
-    self.lastUpdateTime = self.socket.gettime()
+    self.lastUpdateTime = Socket.gettime()
 end
 
 function Server:shutdown(message)
     for _, client in ipairs(self.clients) do
-        client:send(self.json.encode({
+        client:send(JSON.encode({
             command = "disconnect",
             message = message
         }))
         client:close()
+        self:removePlayer(client)
     end
     self.server:close()
 end
@@ -62,7 +60,7 @@ end
 
 -- Check for inactive players
 function Server:checkForInactivePlayers()
-    local currentTime = self.socket.gettime()
+    local currentTime = Socket.gettime()
     for id, player in pairs(self.players) do
         if currentTime - player.lastUpdate >= TIMEOUT_THRESHOLD then
             self:removePlayer(player.client)
@@ -98,14 +96,14 @@ function Server:sendUpdatesToClients()
                 command = "update",
                 players = updates[player.map]
             }
-            player.client:send(self.json.encode(updateMessage) .. "\n")
+            player.client:send(JSON.encode(updateMessage) .. "\n")
         end
     end
 end
 
 -- Handle client messages
 function Server:processClientMessage(client, data)
-    local message = self.json.decode(data)
+    local message = JSON.decode(data)
     local command = message.command
     local subCommand = message.subCommand
 
@@ -117,10 +115,10 @@ function Server:processClientMessage(client, data)
             sprite = message.sprite or "walk", 
             map = message.map or "default", 
             uuid = id,
-            client = client, lastUpdate = self.socket.gettime(), direction = "down"
+            client = client, lastUpdate = Socket.gettime(), direction = "down"
         }
         print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. self.players[id].actor)
-        client:send(self.json.encode{
+        client:send(JSON.encode{
             command = "register",
             uuid = id
         }.. "\n")
@@ -136,7 +134,7 @@ function Server:processClientMessage(client, data)
                 player.direction = message.direction
                 player.actor = message.actor
                 player.sprite = message.sprite
-                player.lastUpdate = self.socket.gettime()
+                player.lastUpdate = Socket.gettime()
             end
         elseif subCommand == "inMap" then
             local id = message.uuid
@@ -165,7 +163,7 @@ function Server:processClientMessage(client, data)
                         command = "RemoveOtherPlayersFromMap",
                         players = playersToRemove
                     }
-                    player.client:send(self.json.encode(removeMessage) .. "\n")
+                    player.client:send(JSON.encode(removeMessage) .. "\n")
                 end
             end
         end
@@ -184,7 +182,7 @@ function Server:tick()
         print("New client connected")
     end
 
-    local readable, _, _ = self.socket.select(self.clients, nil, 0)
+    local readable, _, _ = Socket.select(self.clients, nil, 0)
     for _, client in ipairs(readable) do
         local data, err = client:receive()
         if data then
@@ -195,7 +193,7 @@ function Server:tick()
         end
     end
 
-    local currentTime = self.socket.gettime()
+    local currentTime = Socket.gettime()
     if (currentTime - self.lastUpdateTime) >= self.updateInterval then
         self:sendUpdatesToClients()
         self.lastUpdateTime = currentTime
@@ -205,5 +203,4 @@ function Server:tick()
     self:checkForInactivePlayers()
 end
 
-Server:init()
 return Server
