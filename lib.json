@@ -1,0 +1,15 @@
+{
+    "id": "gasterscoolsocialnetwork",
+
+    "version": "v0.0.1",
+    "engineVer": "v0.9.0-dev",
+
+    "authors": [
+        "SadDiamondMan",
+        "Various GitHub contributors"
+    ],
+    "config": {
+        "domain": "serveo.net",
+        "port": 25574
+    }
+}
