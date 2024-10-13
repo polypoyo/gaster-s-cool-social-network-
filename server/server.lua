@@ -2,6 +2,22 @@
 local Server = {}
 local TIMEOUT_THRESHOLD = 20
 
+-- adapted from https://stackoverflow.com/a/49709999
+local function filter(old_arr, func)
+    local arr = {unpack(old_arr)}
+    local new_index = 1
+    local size_orig = #arr
+    for old_index, v in ipairs(arr) do
+        if func(v, old_index) then
+            arr[new_index] = v
+            new_index = new_index + 1
+        end
+    end
+    for i = new_index, size_orig do arr[i] = nil end
+    return arr
+end
+
+
 function Server:start()
     self.server = assert(Socket.bind("localhost", 25574))
     self.ip, self.port = self.server:getsockname()
@@ -94,7 +110,12 @@ function Server:sendUpdatesToClients()
         if player.client and updates[player.map] then
             local updateMessage = {
                 command = "update",
-                players = updates[player.map]
+                players = filter(
+                    updates[player.map],
+                    function(value, index)
+                        return value.uuid ~= player.uuid
+                    end
+                )
             }
             player.client:send(JSON.encode(updateMessage) .. "\n")
         end
