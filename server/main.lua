@@ -25,7 +25,7 @@ function love.draw()
     
     local yOffset = 30
     for _, player in pairs(server.players) do
-        if player.username and player.uuid and player.map and player.actor and player.x and player.y and player.direction then
+        if player.username and player.uuid and player.map and player.actor and player.x and player.y then
             love.graphics.printf("Player: " .. player.username ..
                                  "\nUUID: " .. player.uuid ..
                                  "\nActor: " .. player.actor ..
