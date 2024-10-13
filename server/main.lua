@@ -1,3 +1,4 @@
+
 local socket = require("socket")
 local json = require("json")
 
@@ -10,7 +11,21 @@ local clients = {}
 local players = {}
 local updateInterval = 0.1
 local lastUpdateTime = socket.gettime()
-local TIMEOUT_THRESHOLD = 10
+local TIMEOUT_THRESHOLD = 20
+
+
+math.randomseed(os.time())
+
+local random = math.random
+local function uuid()
+    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    return string.gsub(template, '[xy]', function (c)
+        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
+        return string.format('%x', v)
+    end)
+end
+
+--print(uuid())
 
 -- Remove disconnected player
 local function removePlayer(client)
@@ -79,11 +94,12 @@ local function processClientMessage(client, data)
     if command == "register" then
         players[message.username] = {
             username = message.username,
-            x = 0, y = 0, actor = message.actor or "default_actor",
+            x = 0, y = 0, actor = message.actor or "dummy",
             map = message.map or "default", 
             client = client, lastUpdate = socket.gettime(), direction = "down"
         }
         print("Player " .. message.username .. " registered with actor: " .. players[message.username].actor)
+
     elseif command == "world" and subCommand == "update" then
         local player = players[message.username]
         if player then
@@ -91,6 +107,7 @@ local function processClientMessage(client, data)
             player.y = message.y
             player.map = message.map or player.map
             player.direction = message.direction
+            player.actor = message.actor
             player.lastUpdate = socket.gettime()
         end
     elseif command == "world" and subCommand == "inMap" then
