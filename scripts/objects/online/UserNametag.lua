@@ -74,4 +74,4 @@ Draw.setColor(1, 1, 1, 1)
     Draw.setColor(1, 1, 1, 1)
     super.draw(self)
 end
-return Nametag
+return UserNametag
