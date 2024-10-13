@@ -30,6 +30,7 @@ local lastPlayerListTime = 0
 function Player:init(...)
     super.init(self, ...)
     self.name = Game.save_name
+    Game.world.other_players = nil
     Game.world.other_players = {}  -- Store other players
 
     -- Register player with username and actor
@@ -77,6 +78,10 @@ function Player:update(...)
                                 other_player:setActor("dummy")
                             end
                         end
+                        
+                        if other_player.sprite.sprite_options[1] ~= playerData.sprite then
+                            other_player:setSprite(playerData.sprite)
+                        end
                     else
                         local otherplr
                         local success, result = pcall(Other_Player, playerData.actor, playerData.x, playerData.y, playerData.username, playerData.uuid)
@@ -116,7 +121,8 @@ function Player:update(...)
             y = self.y,
             map = Game.world.map.id or "null",
             direction = self.facing,
-            actor = self.actor.id
+            actor = self.actor.id,
+            sprite = self.sprite.sprite_options[1]
         }
         sendToServer(client, updateMessage)
         lastUpdateTime = currentTime
