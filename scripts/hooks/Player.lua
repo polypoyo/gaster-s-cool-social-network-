@@ -63,12 +63,6 @@ function Player:update(...)
                     local other_player = Game.world.other_players[playerData.uuid]
 
                     if other_player then
-
-                        if other_player.mapID ~= Game.world.map.id then
-                            other_player:remove()
-                            other_player = nil
-                        end
-
                         -- Smoothly interpolate position update
                         other_player.targetX = playerData.x
                         other_player.targetY = playerData.y
@@ -96,14 +90,15 @@ function Player:update(...)
                         else
                             otherplr = Other_Player("dummy", playerData.x, playerData.y, playerData.username, playerData.uuid)
                         end
-                        -- Create a new player if it doesn't exist
-                        other_player = otherplr
-                        other_player.layer = Game.world.map.object_layer
-                        other_player.mapID = playerData.map
-                        Game.world:addChild(other_player)
-                        Game.world.other_players[playerData.uuid] = other_player
-                        -- Set initial facing direction
-                        other_player:setFacing(playerData.direction)
+
+                        if playerData.map == Game.world.map.id then
+                            -- Create a new player if it doesn't exist while making sure It's on the right map
+                            other_player = otherplr
+                            other_player.layer = Game.world.map.object_layer
+                            other_player.mapID = playerData.map
+                            Game.world:addChild(other_player)
+                            Game.world.other_players[playerData.uuid] = other_player
+                        end
                     end
                 end
             end

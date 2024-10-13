@@ -8,6 +8,7 @@ function Other_Player:init(chara, x, y, name, uuid)
     self.targetX = x
     self.targetY = y
     self.uuid = uuid
+    self.facing = "down"
 
     local nametag = UserNametag(self, self.name)
     self:addChild(nametag)
