@@ -61,6 +61,16 @@ function Player:update(...)
                         other_player.targetY = playerData.y
                         -- Update facing direction
                         other_player:setFacing(playerData.direction)
+
+                        if other_player.actor.id ~= playerData.actor then
+                            
+                            local success, result = pcall(Other_Player, playerData.actor, 0, 0, 0)
+                            if success then
+                                other_player:setActor(playerData.actor)
+                            else
+                                other_player:setActor("dummy")
+                            end
+                        end
                     else
                         local otherplr
                         local success, result = pcall(Other_Player, playerData.actor, playerData.x, playerData.y, playerData.username)
