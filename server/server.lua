@@ -1,18 +1,23 @@
-
-local socket = require("socket")
-local json = require("json")
-
-local server = assert(socket.bind("localhost", 25574))
-local ip, port = server:getsockname()
-server:settimeout(0)
-print("Server started on " .. ip .. ":" .. port)
-
-local clients = {}
-local players = {}
-local updateInterval = 0.1
-local lastUpdateTime = socket.gettime()
+---@class Server
+local Server = {}
 local TIMEOUT_THRESHOLD = 20
 
+function Server:init()
+    self.socket = require("socket")
+    self.json = require("json")
+    
+    self.server = assert(self.socket.bind("localhost", 25574))
+    self.ip, self.port = self.server:getsockname()
+    self.server:settimeout(0)
+    print("Server started on " .. self.ip .. ":" .. self.port)
+    
+    self.clients = {}
+    self.players = {}
+    self.updateInterval = 0.1
+    self.lastUpdateTime = self.socket.gettime()
+end
+
+local self = Server
 
 math.randomseed(os.time())
 
@@ -28,38 +33,38 @@ end
 --print(uuid())
 
 -- Remove disconnected player
-local function removePlayer(client)
-    for i, c in ipairs(clients) do
+function Server:removePlayer(client)
+    for i, c in ipairs(self.clients) do
         if c == client then
-            table.remove(clients, i)
+            table.remove(self.clients, i)
             break
         end
     end
-    for id, player in pairs(players) do
+    for id, player in pairs(self.players) do
         if player.client == client then
-            print("Player " .. players[id].username .. " removed due to disconnection.")
-            players[id] = nil
+            print("Player " .. self.players[id].username .. " removed due to disconnection.")
+            self.players[id] = nil
             break
         end
     end
 end
 
 -- Check for inactive players
-local function checkForInactivePlayers()
-    local currentTime = socket.gettime()
-    for id, player in pairs(players) do
+function Server:checkForInactivePlayers()
+    local currentTime = self.socket.gettime()
+    for id, player in pairs(self.players) do
         if currentTime - player.lastUpdate >= TIMEOUT_THRESHOLD then
-            removePlayer(player.client)
+            self:removePlayer(player.client)
         end
     end
 end
 
 -- Send updates to clients
-local function sendUpdatesToClients()
+function Server:sendUpdatesToClients()
     local updates = {}
 
     -- Collect updates per map
-    for id, player in pairs(players) do
+    for id, player in pairs(self.players) do
         if player.client then
             updates[player.map] = updates[player.map] or {}
             table.insert(updates[player.map], {
@@ -76,42 +81,42 @@ local function sendUpdatesToClients()
     end
 
     -- Send updates only to players on the same map
-    for id, player in pairs(players) do
+    for id, player in pairs(self.players) do
         if player.client and updates[player.map] then
             local updateMessage = {
                 command = "update",
                 players = updates[player.map]
             }
-            player.client:send(json.encode(updateMessage) .. "\n")
+            player.client:send(self.json.encode(updateMessage) .. "\n")
         end
     end
 end
 
 -- Handle client messages
-local function processClientMessage(client, data)
-    local message = json.decode(data)
+function Server:processClientMessage(client, data)
+    local message = self.json.decode(data)
     local command = message.command
     local subCommand = message.subCommand
 
     if command == "register" then
         local id = message.uuid or uuid()
-        players[id] = {
+        self.players[id] = {
             username = message.username,
             x = 0, y = 0, actor = message.actor or "dummy",
             sprite = message.sprite or "walk", 
             map = message.map or "default", 
             uuid = id,
-            client = client, lastUpdate = socket.gettime(), direction = "down"
+            client = client, lastUpdate = self.socket.gettime(), direction = "down"
         }
-        print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. players[id].actor)
-        client:send(json.encode{
+        print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. self.players[id].actor)
+        client:send(self.json.encode{
             command = "register",
             uuid = id
         }.. "\n")
 
     elseif command == "world" then 
         if subCommand == "update" then
-            local player = players[message.uuid]
+            local player = self.players[message.uuid]
             if player then
                 player.username = message.username
                 player.x = message.x
@@ -120,16 +125,16 @@ local function processClientMessage(client, data)
                 player.direction = message.direction
                 player.actor = message.actor
                 player.sprite = message.sprite
-                player.lastUpdate = socket.gettime()
+                player.lastUpdate = self.socket.gettime()
             end
         elseif subCommand == "inMap" then
             local id = message.uuid
             local clientPlayers = message.players
-            local player = players[id]
+            local player = self.players[id]
 
             if player then
                 local actualMapPlayers = {}
-                for otherId, otherPlayer in pairs(players) do
+                for otherId, otherPlayer in pairs(self.players) do
                     if otherPlayer.map == player.map then
                         actualMapPlayers[otherId] = true
                     end
@@ -149,65 +154,45 @@ local function processClientMessage(client, data)
                         command = "RemoveOtherPlayersFromMap",
                         players = playersToRemove
                     }
-                    player.client:send(json.encode(removeMessage) .. "\n")
+                    player.client:send(self.json.encode(removeMessage) .. "\n")
                 end
             end
         end
     elseif command == "disconnect" then
-        print("Player " .. players[message.id].username .. " disconnected")
-        removePlayer(client)
+        print("Player " .. self.players[message.id].username .. " disconnected")
+        self:removePlayer(client)
     end
 end
 
 -- Main server loop
-local function main()
-    local client = server:accept()
+function Server:tick()
+    local client = self.server:accept()
     if client then
         client:settimeout(0)
-        table.insert(clients, client)
+        table.insert(self.clients, client)
         print("New client connected")
     end
 
-    local readable, _, _ = socket.select(clients, nil, 0)
+    local readable, _, _ = self.socket.select(self.clients, nil, 0)
     for _, client in ipairs(readable) do
         local data, err = client:receive()
         if data then
-            processClientMessage(client, data)
+            self:processClientMessage(client, data)
         elseif err == "closed" then
-            removePlayer(client)
+            self:removePlayer(client)
             print("Client disconnected")
         end
     end
 
-    local currentTime = socket.gettime()
-    if (currentTime - lastUpdateTime) >= updateInterval then
-        sendUpdatesToClients()
-        lastUpdateTime = currentTime
+    local currentTime = self.socket.gettime()
+    if (currentTime - self.lastUpdateTime) >= self.updateInterval then
+        self:sendUpdatesToClients()
+        self.lastUpdateTime = currentTime
     end
 
     -- Check for inactive players
-    checkForInactivePlayers()
+    self:checkForInactivePlayers()
 end
 
-function love.update(dt)
-    main()  -- Call the main server function once per update
-end
-
-function love.draw()
-    love.graphics.setColor(1, 1, 1)  -- Set color to white
-    love.graphics.printf("Connected Players:\n", 10, 10, love.graphics.getWidth(), "left")
-    
-    local yOffset = 30
-    for _, player in pairs(players) do
-        if player.username and player.uuid and player.map and player.actor and player.x and player.y and player.direction then
-            love.graphics.printf("Player: " .. player.username ..
-                                 "\nUUID: " .. player.uuid ..
-                                 "\nActor: " .. player.actor ..
-                                 "\nSprite: " .. player.sprite ..
-                                 "\nMap: " .. player.map ..
-                                 "\nX: " .. player.x .. ", Y: " .. player.y ..
-                                 "\nDirection: " .. player.direction, 10, yOffset, love.graphics.getWidth(), "left")
-            yOffset = yOffset + 100
-        end
-    end
-end
+Server:init()
+return Server
