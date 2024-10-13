@@ -1,8 +1,8 @@
 ---@class Nametag : Object
 ---@overload fun(...) : Nametag
-local Nametag, super = Class(Object)
+local UserNametag, super = Class(Object)
 
-function Nametag:init(pc, name)
+function UserNametag:init(pc, name)
     super.init(self)
 
     self.pc = pc
@@ -17,7 +17,7 @@ function Nametag:init(pc, name)
 
 end
 
-function Nametag:pc_force_move(x, y, room)
+function UserNametag:pc_force_move(x, y, room)
 
     if not room == false then
 
@@ -27,7 +27,7 @@ function Nametag:pc_force_move(x, y, room)
     self.pc.y = y
 end
 
-function Nametag:update()
+function UserNametag:update()
     super.update(self)
 
     if Input.pressed("1") then
@@ -48,7 +48,7 @@ function Nametag:update()
 
 end
 
-function Nametag:draw()
+function UserNametag:draw()
     love.graphics.setFont(self.font)
 
     love.graphics.scale(0.5, 0.5)
