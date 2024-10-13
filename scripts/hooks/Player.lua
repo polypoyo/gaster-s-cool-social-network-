@@ -19,7 +19,8 @@ local lastPlayerListTime = 0
 
 function Player:init(...)
     super.init(self, ...)
-    self.name = Game.save_name -- Store other players
+    self.name = Game.save_name
+    Game.world.other_players = {}  -- Store other players
 
     -- Register player with username and actor
     local registerMessage = {
@@ -52,7 +53,7 @@ function Player:update(...)
         if data.command == "update" then
             for _, playerData in ipairs(data.players) do
                 if playerData.username ~= self.name then
-                    local other_player = Game.other_players[playerData.username]
+                    local other_player = Game.world.other_players[playerData.username]
 
                     if other_player then
                         -- Smoothly interpolate position update
@@ -82,7 +83,7 @@ function Player:update(...)
                         other_player = otherplr
                         other_player.layer = Game.world.map.object_layer
                         Game.world:addChild(other_player)
-                        Game.other_players[playerData.username] = other_player
+                        Game.world.other_players[playerData.username] = other_player
                         -- Set initial facing direction
                         other_player:setFacing(playerData.direction)
                     end
@@ -90,9 +91,9 @@ function Player:update(...)
             end
         elseif data.command == "RemoveOtherPlayersFromMap" then
             for _, username in ipairs(data.players) do
-                if Game.other_players[username] then
-                    Game.other_players[username]:remove()
-                    Game.other_players[username] = nil
+                if Game.world.other_players[username] then
+                    Game.world.other_players[username]:remove()
+                    Game.world.other_players[username] = nil
                 end
             end
         end
@@ -117,7 +118,7 @@ function Player:update(...)
     -- Throttle current players list packets
     if currentTime - lastPlayerListTime >= THROTTLE_INTERVAL then
         local playersList = {}
-        for username, _ in pairs(Game.other_players) do
+        for username, _ in pairs(Game.world.other_players) do
             table.insert(playersList, username)
         end
 
