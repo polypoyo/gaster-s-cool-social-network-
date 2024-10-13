@@ -82,8 +82,7 @@ function Server:sendUpdatesToClients()
                 y = player.y,
                 actor = player.actor,
                 sprite = player.sprite,
-                map = player.map,
-                direction = player.direction
+                map = player.map
             })
         end
     end
@@ -119,10 +118,11 @@ function Server:processClientMessage(client, data)
         self.players[id] = {
             username = message.username,
             x = 0, y = 0, actor = message.actor or "dummy",
-            sprite = message.sprite or "walk", 
+            sprite = message.sprite or "walk/down", 
             map = message.map or "default", 
             uuid = id,
-            client = client, lastUpdate = Socket.gettime(), direction = "down"
+            client = client,
+            lastUpdate = Socket.gettime()
         }
         print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. self.players[id].actor)
         client:send(JSON.encode{
@@ -138,7 +138,6 @@ function Server:processClientMessage(client, data)
                 player.x = message.x
                 player.y = message.y
                 player.map = message.map or player.map
-                player.direction = message.direction
                 player.actor = message.actor
                 player.sprite = message.sprite
                 player.lastUpdate = Socket.gettime()

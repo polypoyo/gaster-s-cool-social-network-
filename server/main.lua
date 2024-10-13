@@ -31,8 +31,7 @@ function love.draw()
                                  "\nActor: " .. player.actor ..
                                  "\nSprite: " .. player.sprite ..
                                  "\nMap: " .. player.map ..
-                                 "\nX: " .. player.x .. ", Y: " .. player.y ..
-                                 "\nDirection: " .. player.direction, 10, yOffset, love.graphics.getWidth(), "left")
+                                 "\nX: " .. player.x .. ", Y: " .. player.y)
             yOffset = yOffset + 100
         end
     end

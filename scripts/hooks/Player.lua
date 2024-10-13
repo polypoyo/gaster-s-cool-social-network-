@@ -63,11 +63,15 @@ function Player:update(...)
                     local other_player = Game.world.other_players[playerData.uuid]
 
                     if other_player then
+
+                        if other_player.mapID ~= Game.world.map.id then
+                            other_player:remove()
+                            other_player = nil
+                        end
+
                         -- Smoothly interpolate position update
                         other_player.targetX = playerData.x
                         other_player.targetY = playerData.y
-                        -- Update facing direction
-                        other_player:setFacing(playerData.direction)
 
                         if other_player.actor.id ~= playerData.actor then
                             
@@ -82,6 +86,8 @@ function Player:update(...)
                         if other_player.sprite.sprite_options[1] ~= playerData.sprite then
                             other_player:setSprite(playerData.sprite)
                         end
+
+
                     else
                         local otherplr
                         local success, result = pcall(Other_Player, playerData.actor, playerData.x, playerData.y, playerData.username, playerData.uuid)
@@ -93,6 +99,7 @@ function Player:update(...)
                         -- Create a new player if it doesn't exist
                         other_player = otherplr
                         other_player.layer = Game.world.map.object_layer
+                        other_player.mapID = playerData.map
                         Game.world:addChild(other_player)
                         Game.world.other_players[playerData.uuid] = other_player
                         -- Set initial facing direction
@@ -120,7 +127,6 @@ function Player:update(...)
             x = self.x,
             y = self.y,
             map = Game.world.map.id or "null",
-            direction = self.facing,
             actor = self.actor.id,
             sprite = self.sprite.sprite_options[1]
         }
