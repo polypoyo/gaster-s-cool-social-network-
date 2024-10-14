@@ -116,6 +116,11 @@ function Lib:updateWorld(...)
                     end
                 end
             end
+        elseif data.command == "chat" then
+            local sender = self.other_players[data.uuid] or Game.world.player
+            local bubble = ChatBubble(sender.actor, data.message)
+            bubble:setScale(0.25)
+            sender:addChild(bubble)
         elseif data.command == "RemoveOtherPlayersFromMap" then
             for _, uuid in ipairs(data.players) do
                 if self.other_players[uuid] then
