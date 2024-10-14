@@ -41,12 +41,12 @@ end
 -- Example of updating sprite animation in Other_Player class
 function Other_Player:update(...)
     if self.fadingOut then
-        self.alpha = math.max(0, self.alpha + (DT * 2))
+        self.alpha = math.max(0, self.alpha - (DT * 4))
         if self.alpha <= 0 then
             self:remove()
         end
     else
-        self.alpha = math.min(1, self.alpha + (DT * 2))
+        self.alpha = math.min(1, self.alpha + (DT * 4))
     end
     super.update(self, ...)
 

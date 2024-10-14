@@ -118,7 +118,7 @@ function Lib:updateWorld(...)
         elseif data.command == "RemoveOtherPlayersFromMap" then
             for _, uuid in ipairs(data.players) do
                 if self.other_players[uuid] then
-                    self.other_players[uuid]:remove()
+                    self.other_players[uuid].fadingOut = true
                     self.other_players[uuid] = nil
                 end
             end
