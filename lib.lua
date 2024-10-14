@@ -36,12 +36,6 @@ client:settimeout(0)
 local THROTTLE_INTERVAL = 0.05
 local lastUpdateTime = 0
 local lastPlayerListTime = 0
-
-local function call_or(func, fallback, ...)
-    local ok, ret = pcall(func, ...)
-    if ok then return ret end
-    return fallback
-end
 function Lib:init()
     Utils.hook(World, 'update', function (orig, wld, ...)
         orig(wld,...)
