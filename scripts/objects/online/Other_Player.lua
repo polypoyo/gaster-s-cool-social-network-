@@ -10,6 +10,8 @@ function Other_Player:init(chara, x, y, name, uuid)
     self.uuid = uuid
     self.facing = "down"
 
+    self.alpha = 0
+    self.fadingOut = false
     local nametag = UserNametag(self, self.name)
     self:addChild(nametag)
 end
@@ -38,6 +40,14 @@ end
 
 -- Example of updating sprite animation in Other_Player class
 function Other_Player:update(...)
+    if self.fadingOut then
+        self.alpha = math.max(0, self.alpha - (DT * 4))
+        if self.alpha <= 0 then
+            self:remove()
+        end
+    else
+        self.alpha = math.min(1, self.alpha + (DT * 4))
+    end
     super.update(self, ...)
 
     -- Check if this player is moving
