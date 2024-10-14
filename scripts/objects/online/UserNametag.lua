@@ -30,6 +30,7 @@ end
 
 function UserNametag:update()
     super.update(self)
+    self.name = self.pc.name
 
     if Input.pressed("1") then
         self.connected = 1

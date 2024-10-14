@@ -79,6 +79,7 @@ function Lib:updateWorld(...)
                         -- Smoothly interpolate position update
                         other_player.targetX = playerData.x
                         other_player.targetY = playerData.y
+                        other_player.name = playerData.username
 
                         if other_player.actor.id ~= playerData.actor then
                             

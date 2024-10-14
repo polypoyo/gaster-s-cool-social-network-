@@ -12,8 +12,8 @@ function Other_Player:init(chara, x, y, name, uuid)
 
     self.alpha = 0
     self.fadingOut = false
-    local nametag = UserNametag(self, self.name)
-    self:addChild(nametag)
+    self.nametag = UserNametag(self, self.name)
+    self:addChild(self.nametag)
 end
 
 function Other_Player:getDebugInfo()
