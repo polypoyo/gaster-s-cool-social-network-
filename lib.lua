@@ -15,6 +15,7 @@ local json = JSON
 
 local function sendToServer(client, message)
     local encodedMessage = json.encode(message)
+    -- print("[OUT] "..Utils.dump(encodedMessage))
     client:send(encodedMessage .. "\n")
 end
 
@@ -42,6 +43,10 @@ local function call_or(func, fallback, ...)
     return fallback
 end
 function Lib:init()
+    Utils.hook(World, 'update', function (orig, wld, ...)
+        orig(wld,...)
+        self:updateWorld()
+    end)
 end
 function Lib:postInit()
     self.name = Game.save_name
@@ -51,7 +56,7 @@ function Lib:postInit()
     local registerMessage = {
         command = "register",
         uuid = Game:getFlag("GCSN_UUID"), -- server will generate this if it's nil
-        username = self.name or "UHHHH",
+        username = self.name,
         actor = Game.party[1].actor.id or "kris"  -- Include actor
     }
     sendToServer(client, registerMessage)
@@ -59,7 +64,7 @@ end
 
 
 
-function Lib:update(...)
+function Lib:updateWorld(...)
     local player = Game.world.player
     -- Update the current time
     local currentTime = love.timer.getTime()
@@ -67,7 +72,7 @@ function Lib:update(...)
     -- Receive data from the server (if any)
     local data = receiveFromServer(client)
     if data then
-        Kristal.Console.log("[NET] "..data)
+        -- print("[NET] "..Utils.dump(data))
         if data.command == "register" then
             self.uuid = data.uuid
             Game:setFlag("GCSN_UUID", self.uuid)
