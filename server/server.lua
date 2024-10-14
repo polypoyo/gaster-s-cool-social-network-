@@ -173,6 +173,19 @@ function Server:processClientMessage(client, data)
                     player.client:send(JSON.encode(removeMessage) .. "\n")
                 end
             end
+        elseif subCommand == "chat" then
+            local id = message.uuid
+            local sender = self.players[id]
+            for _, reciever in pairs(self.players) do
+                
+                if reciever.map == sender.map then
+                    reciever.client:send(JSON.encode({
+                        command = "chat",
+                        uuid = id,
+                        message = message.message
+                    }).."\n")
+                end
+            end
         end
     elseif command == "disconnect" then
         print("Player " .. self.players[message.id].username .. " disconnected")
