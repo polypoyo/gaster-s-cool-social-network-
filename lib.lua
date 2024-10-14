@@ -1,5 +1,14 @@
----@class Player
-local Player, super = Class("Player", true)
+---@class Lib
+local Lib = {}
+
+Game.socket = require("socket")
+
+Game.client = assert(
+    Game.socket.connect(
+        Kristal.getLibConfig("gasterscoolsocialnetwork", "domain"),
+        Kristal.getLibConfig("gasterscoolsocialnetwork", "port")
+    )
+)
 
 local socket = Game.socket
 local json = JSON
@@ -27,40 +36,45 @@ local THROTTLE_INTERVAL = 0.05
 local lastUpdateTime = 0
 local lastPlayerListTime = 0
 
-function Player:init(...)
-    super.init(self, ...)
+local function call_or(func, fallback, ...)
+    local ok, ret = pcall(func, ...)
+    if ok then return ret end
+    return fallback
+end
+function Lib:init()
+end
+function Lib:postInit()
     self.name = Game.save_name
-    Game.world.other_players = nil
-    Game.world.other_players = {}  -- Store other players
-
+    self.other_players = nil
+    self.other_players = {}  -- Store other players
     -- Register player with username and actor
     local registerMessage = {
         command = "register",
         uuid = Game:getFlag("GCSN_UUID"), -- server will generate this if it's nil
-        username = self.name,
-        actor = self.actor.id or "kris"  -- Include actor
+        username = self.name or "UHHHH",
+        actor = Game.party[1].actor.id or "kris"  -- Include actor
     }
     sendToServer(client, registerMessage)
 end
 
 
 
-function Player:update(...)
-    super.update(self, ...)
-
+function Lib:update(...)
+    local player = Game.world.player
     -- Update the current time
     local currentTime = love.timer.getTime()
 
     -- Receive data from the server (if any)
     local data = receiveFromServer(client)
     if data then
+        Kristal.Console.log("[NET] "..data)
         if data.command == "register" then
             self.uuid = data.uuid
             Game:setFlag("GCSN_UUID", self.uuid)
         elseif data.command == "update" then
             for _, playerData in ipairs(data.players) do
                 if playerData.uuid ~= self.uuid then
-                    local other_player = Game.world.other_players[playerData.uuid]
+                    local other_player = self.other_players[playerData.uuid]
 
                     if other_player then
                         -- Smoothly interpolate position update
@@ -97,16 +111,16 @@ function Player:update(...)
                             other_player.layer = Game.world.map.object_layer
                             other_player.mapID = playerData.map
                             Game.world:addChild(other_player)
-                            Game.world.other_players[playerData.uuid] = other_player
+                            self.other_players[playerData.uuid] = other_player
                         end
                     end
                 end
             end
         elseif data.command == "RemoveOtherPlayersFromMap" then
             for _, uuid in ipairs(data.players) do
-                if Game.world.other_players[uuid] then
-                    Game.world.other_players[uuid]:remove()
-                    Game.world.other_players[uuid] = nil
+                if self.other_players[uuid] then
+                    self.other_players[uuid]:remove()
+                    self.other_players[uuid] = nil
                 end
             end
         end
@@ -119,11 +133,11 @@ function Player:update(...)
             subCommand = "update",
             username = self.name,
             uuid = self.uuid,
-            x = self.x,
-            y = self.y,
+            x = player.x,
+            y = player.y,
             map = Game.world.map.id or "null",
-            actor = self.actor.id,
-            sprite = self.sprite.sprite_options[1]
+            actor = player.actor.id,
+            sprite = player.sprite.sprite_options[1]
         }
         sendToServer(client, updateMessage)
         lastUpdateTime = currentTime
@@ -132,7 +146,7 @@ function Player:update(...)
     -- Throttle current players list packets
     if currentTime - lastPlayerListTime >= THROTTLE_INTERVAL then
         local playersList = {}
-        for uuid, _ in pairs(Game.world.other_players) do
+        for uuid, _ in pairs(self.other_players) do
             table.insert(playersList, uuid)
         end
 
@@ -148,4 +162,4 @@ function Player:update(...)
     end
 end
 
-return Player
+return Lib
