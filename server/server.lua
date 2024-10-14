@@ -109,7 +109,8 @@ end
 
 -- Handle client messages
 function Server:processClientMessage(client, data)
-    local message = JSON.decode(data)
+    local ok, message = pcall(JSON.decode, data)
+    if not ok then return print(message) end
     local command = message.command
     local subCommand = message.subCommand
 
