@@ -1,24 +1,23 @@
 ---@class ChatBubble: Object
 local ChatBubble, super = Class(Object)
-local function str_split(self, delimiter)
-    local result = { }
-    local from  = 1
-    local delim_from, delim_to = string.find( self, delimiter, from  )
-    while delim_from do
-      table.insert( result, string.sub( self, from , delim_from-1 ) )
-      from  = delim_to + 1
-      delim_from, delim_to = string.find( self, delimiter, from  )
+
+
+local function physicalStrlen(a)
+    local b = ""
+    for i, str in ipairs(Utils.splitFast( string.gsub(a,"]","["), "[")) do
+        if i % 2 == 1 then
+            b = b .. str
+        end
     end
-    table.insert( result, string.sub( self, from  ) )
-    return result
-  end
-  
+    return string.len(b)
+end
+
 function ChatBubble:init(actor, text, x, y)
     super.init(self,x,y)
-    local split_text = str_split(text, "\n")
+    local split_text = Utils.splitFast(text, "\n")
     local longest_line = 0
     for _, v in ipairs(split_text) do
-        longest_line = math.max(longest_line, #v)
+        longest_line = math.max(longest_line, physicalStrlen(v))
     end
     self.origin_x = 0.5 -- * longest_line
     self.width = (16 * longest_line) + 4
