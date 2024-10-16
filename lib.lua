@@ -19,10 +19,13 @@ local function sendToServer(client, message)
     client:send(encodedMessage .. "\n")
 end
 
-local function receiveFromServer(client)
-    local response, err = client:receive()
-    if response then
-        local decodedResponse = json.decode(response)
+function Lib:receiveFromServer(client)
+    local response, err, partial = client:receive()
+    if partial then
+        self.partial = self.partial .. partial
+    elseif response then
+        local decodedResponse = json.decode(self.partial .. response)
+        self.partial = ""
         return decodedResponse
     elseif err ~= "timeout" then
         print("Error: ", err)
@@ -39,6 +42,7 @@ local lastHearbeatTime = love.timer.getTime()
 local lastUpdateTime = 0
 local lastPlayerListTime = 0
 function Lib:init()
+    self.partial = ""
     Utils.hook(World, 'update', function (orig, wld, ...)
         orig(wld,...)
         self:updateWorld()
@@ -80,7 +84,7 @@ function Lib:updateWorld(...)
     local currentTime = love.timer.getTime()
 
     -- Receive data from the server (if any)
-    local data = receiveFromServer(client)
+    local data = self:receiveFromServer(client)
     if data then
         -- print("[NET] "..Utils.dump(data))
         if data.command == "register" then
