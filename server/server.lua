@@ -190,6 +190,9 @@ function Server:processClientMessage(client, data)
     elseif command == "disconnect" then
         print("Player " .. self.players[message.id].username .. " disconnected")
         self:removePlayer(client)
+    else
+        print("Unhandled command:".. command)
+        print(data)
     end
 end
 
