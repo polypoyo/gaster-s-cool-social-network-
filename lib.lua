@@ -34,12 +34,18 @@ client:settimeout(0)
 
 -- Throttle interval (in seconds)
 local THROTTLE_INTERVAL = 0.05
+local HEARTBEAT_INTERVAL = 10.0
+local lastHearbeatTime = love.timer.getTime()
 local lastUpdateTime = 0
 local lastPlayerListTime = 0
 function Lib:init()
     Utils.hook(World, 'update', function (orig, wld, ...)
         orig(wld,...)
         self:updateWorld()
+    end)
+    Utils.hook(Game, "update", function (orig, ...)
+        orig(...)
+        self:update()
     end)
 end
 function Lib:postInit()
@@ -56,7 +62,17 @@ function Lib:postInit()
     sendToServer(client, registerMessage)
 end
 
-
+function Lib:update()
+    local currentTime = love.timer.getTime()
+    if currentTime - lastHearbeatTime >= HEARTBEAT_INTERVAL then
+        lastHearbeatTime = currentTime
+        sendToServer(client, {
+            command = "heartbeat",
+            uuid = self.uuid,
+            gamestate = Game.state
+        })
+    end
+end
 
 function Lib:updateWorld(...)
     local player = Game.world.player
