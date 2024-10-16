@@ -190,6 +190,14 @@ function Server:processClientMessage(client, data)
     elseif command == "disconnect" then
         print("Player " .. self.players[message.id].username .. " disconnected")
         self:removePlayer(client)
+    elseif command == "heartbeat" then
+        local player = self.players[message.uuid]
+        if player then
+            player.lastUpdate = Socket.gettime()
+        end
+    else
+        print("Unhandled command:".. command)
+        print(data)
     end
 end
 
