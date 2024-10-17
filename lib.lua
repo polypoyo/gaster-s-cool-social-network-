@@ -148,6 +148,9 @@ function Lib:updateWorld(...)
                     self.other_players[uuid] = nil
                 end
             end
+        else
+            Kristal.Console:warn("Unhandled command: " .. (data.command or "<nil>"))
+            Kristal.Console:log(Utils.dump(data))
         end
     end
 
