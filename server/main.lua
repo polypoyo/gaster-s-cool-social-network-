@@ -24,15 +24,19 @@ function love.draw()
     love.graphics.printf("Connected Players:\n", 10, 10, love.graphics.getWidth(), "left")
     
     local yOffset = 30
+    local function line(text)
+        love.graphics.printf(text, 10, yOffset, love.graphics.getWidth(), "left")
+        yOffset = yOffset + 15
+    end
     for _, player in pairs(server.players) do
         if player.username and player.uuid and player.map and player.actor and player.x and player.y then
-            love.graphics.printf("Player: " .. player.username ..
-                                 "\nUUID: " .. player.uuid ..
-                                 "\nActor: " .. player.actor ..
-                                 "\nSprite: " .. player.sprite ..
-                                 "\nMap: " .. player.map ..
-                                 "\nX: " .. player.x .. ", Y: " .. player.y, 10, yOffset, love.graphics.getWidth(), "left")
-            yOffset = yOffset + 100
+            line("Player: " .. player.username)
+            line("UUID: " .. player.uuid)
+            line("Actor: " .. player.actor)
+            line("Sprite: " .. player.sprite)
+            line("Map: " .. player.map)
+            line("X: " .. player.x .. ", Y: " .. player.y)
+            yOffset = yOffset + 10
         end
     end
 end
