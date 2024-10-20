@@ -14,6 +14,17 @@ function Server:start()
     self.lastUpdateTime = Socket.gettime()
 end
 
+---Gets a player by their client
+---@param client any -- The client to search for
+---@return nil | table -- A player if one is found
+function Server:getPlayerFromClient(client)
+    for key, value in pairs(self.players) do
+        if value.client == client then
+            return value
+        end
+    end
+end
+
 function Server:shutdown(message)
     for _, client in ipairs(self.clients) do
         client:send(JSON.encode({
@@ -133,7 +144,7 @@ function Server:processClientMessage(client, data)
 
     elseif command == "world" then 
         if subCommand == "update" then
-            local player = self.players[message.uuid]
+            local player = self:getPlayerFromClient(client)
             if player then
                 player.username = message.username
                 player.x = message.x
@@ -146,7 +157,7 @@ function Server:processClientMessage(client, data)
         elseif subCommand == "inMap" then
             local id = message.uuid
             local clientPlayers = message.players
-            local player = self.players[id]
+            local player = self:getPlayerFromClient(client)
 
             if player then
                 local actualMapPlayers = {}
@@ -188,10 +199,10 @@ function Server:processClientMessage(client, data)
             end
         end
     elseif command == "disconnect" then
-        print("Player " .. self.players[message.id].username .. " disconnected")
+        print("Player " .. self:getPlayerFromClient(client).username .. " disconnected")
         self:removePlayer(client)
     elseif command == "heartbeat" then
-        local player = self.players[message.uuid]
+        local player = self:getPlayerFromClient(client)
         if player then
             player.lastUpdate = Socket.gettime()
         end

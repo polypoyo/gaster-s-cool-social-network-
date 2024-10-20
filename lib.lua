@@ -72,7 +72,6 @@ function Lib:update()
         lastHearbeatTime = currentTime
         sendToServer(client, {
             command = "heartbeat",
-            uuid = self.uuid,
             gamestate = Game.state
         })
     end
@@ -160,7 +159,6 @@ function Lib:updateWorld(...)
             command = "world",
             subCommand = "update",
             username = self.name,
-            uuid = self.uuid,
             x = player.x,
             y = player.y,
             map = Game.world.map.id or "null",
@@ -181,7 +179,6 @@ function Lib:updateWorld(...)
         local currentPlayersMessage = {
             command = "world",
             subCommand = "inMap",
-            uuid = self.uuid,
             username = self.name,
             players = playersList
         }
