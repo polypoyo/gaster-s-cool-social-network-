@@ -23,12 +23,12 @@ function ChatInputBox:draw()
             prefix_width = self.font:getWidth("> "),
             get_prefix = function(place)
                 if place == "start"  then return "┌ " end
-                if place == "middle" then return "│ " end
+                if place == "middle" then return "├ " end
                 if place == "end"    then return "└ " end
-                if place == "single" then return " -" end
+                if place == "single" then return "─ " end
                 return "  "
             end,
-            x = 8,
+            x = -4,
             y = input_pos,
             print = function (text, x, y)
                 love.graphics.setFont(self.font)
