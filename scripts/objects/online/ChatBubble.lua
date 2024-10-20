@@ -21,7 +21,7 @@ function ChatBubble:init(actor, text, x, y)
     end
     self.origin_x = 0.5 -- * longest_line
     self.width = (16 * longest_line) + 4
-    self.height = 32 * #(split_text)
+    self.height = (28 * #split_text) + 8
     self.x_offset = actor.width
     self.y_offset = -actor.height
     self.text = Text(text, self.x_offset, self.y_offset, self.width, self.height, {
