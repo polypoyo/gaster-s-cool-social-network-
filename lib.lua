@@ -42,6 +42,7 @@ local lastHearbeatTime = love.timer.getTime()
 local lastUpdateTime = 0
 local lastPlayerListTime = 0
 function Lib:init()
+    self.chat_box = ChatInputBox()
     self.partial = ""
     Utils.hook(World, 'update', function (orig, wld, ...)
         orig(wld,...)
@@ -53,6 +54,7 @@ function Lib:init()
     end)
 end
 function Lib:postInit()
+    Game.stage:addChild(self.chat_box)
     self.name = Game.save_name
     self.other_players = nil
     self.other_players = {}  -- Store other players
@@ -184,6 +186,16 @@ function Lib:updateWorld(...)
         }
         sendToServer(client, currentPlayersMessage)
         lastPlayerListTime = currentTime
+    end
+end
+
+function Lib:onKeyPressed(key, is_repeat)
+    if (
+        not is_repeat
+        and key == Kristal.getLibConfig("gasterscoolsocialnetwork", "chatBind")
+        and not self.chat_box.is_open
+    ) then
+        self.chat_box:open()
     end
 end
 

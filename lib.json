@@ -10,6 +10,9 @@
         "Various GitHub contributors"
     ],
     "config": {
+        // Set to `null` if you want to implement your own chat key.
+        "chatBind": "/",
+        
         "domain": "serveo.net",
         "port": 25574
     }
