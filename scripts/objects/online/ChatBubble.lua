@@ -14,7 +14,7 @@ end
 
 function ChatBubble:init(actor, text, x, y)
     super.init(self,x,y)
-    local split_text = Utils.splitFast(text, "\n")
+    local split_text = Utils.split(text, "\n")
     local longest_line = 0
     for _, v in ipairs(split_text) do
         longest_line = math.max(longest_line, physicalStrlen(v))
