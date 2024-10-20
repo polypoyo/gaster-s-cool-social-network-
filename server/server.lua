@@ -186,6 +186,7 @@ function Server:processClientMessage(client, data)
             end
         elseif subCommand == "chat" then
             local id = message.uuid
+            if #message.message > 0 then return end
             local sender = self.players[id]
             for _, reciever in pairs(self.players) do
                 
