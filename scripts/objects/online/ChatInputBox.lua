@@ -54,6 +54,9 @@ function ChatInputBox:open()
     TextInput.attachInput(self.input, {
         multiline = true,
         enter_submits = true,
+        text_restriction = function (char)
+            return (#self.input < 30 or char ~= "\n")
+        end,
     })
     TextInput.submit_callback = function() self:onSubmit() end
 end
