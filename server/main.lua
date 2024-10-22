@@ -1,5 +1,6 @@
 Socket = require("socket")
 JSON = require("json")
+NBT = require("shared.nbt")
 ---@type Server
 local Server = require("server")
 

@@ -12,6 +12,7 @@ Game.client = assert(
 
 local socket = Game.socket
 local json = JSON
+local nbt = libRequire("gasterscoolsocialnetwork","scripts.main.shared.nbt")
 
 local function sendToServer(client, message)
     local encodedMessage = json.encode(message)
