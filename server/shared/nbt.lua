@@ -22,6 +22,7 @@
 -- Lua 5.1 or later is required
 assert(_VERSION >= "Lua 5.1", "At least Lua 5.1 is required for this library")
 
+---@class NBTLibrary
 local nbt = {
 	_VERSION = "1.0.1",
 	_DESCRIPTION = "Named Binary Tag library for Lua",
@@ -415,6 +416,7 @@ local function limitString(v)
 end
 
 -- NBT TAG_* class
+---@class NBTTag
 local TagClass = {
 	-- Names, no need to use separate table
 	"TAG_Byte",
@@ -762,33 +764,33 @@ end
 -- Public NBT functions
 
 --- Create new `TAG_Byte` object.
--- @tparam number v Byte value
--- @tparam[opt] string name Tag name
--- @return Tag class with `TAG_Byte` type.
--- @warning Value will be converted integer and
--- clamped to -128...127 if outside range
+--- @param v number Byte value
+--- @param name string? Tag name
+--- @return NBTTag tag_byte
+--- @warning Value will be converted integer and
+--- clamped to -128...127 if outside range
 function nbt.newByte(v, name)
 	v = assert(tonumber(v), "invalid number passed")
 	return TagClass.new(TAG_BYTE, toInteger(math.min(math.max(v, -128), 127)), name)
 end
 
 --- Create new `TAG_Short` object.
--- @tparam number v Short value
--- @tparam[opt] string name Tag name
--- @return Tag class with `TAG_Short` type.
--- @warning Value will be converted integer and
--- clamped to -32768...32767 if outside range
+--- @param v number Short value
+--- @param name? string Tag name
+--- @return NBTTag class with `TAG_Short` type.
+--- @warning Value will be converted integer and
+--- clamped to -32768...32767 if outside range
 function nbt.newShort(v, name)
 	v = assert(tonumber(v), "invalid number passed")
 	return TagClass.new(TAG_SHORT, toInteger(math.min(math.max(v, -32768), 32767)), name)
 end
 
 --- Create new `TAG_Int` object.
--- @tparam number v Int value
--- @tparam[opt] string name Tag name
--- @return Tag class with `TAG_Int` type.
--- @warning Value will be converted integer and
--- clamped to -2147483648...2147483647 if outside range
+--- @param v number Int value
+--- @param name? string Tag name
+--- @return NBTTag class with `TAG_Int` type.
+--- @warning Value will be converted integer and
+--- clamped to -2147483648...2147483647 if outside range
 function nbt.newInt(v, name)
 	v = assert(tonumber(v), "invalid number passed")
 	return TagClass.new(TAG_INT, toInteger(math.min(math.max(v, -2147483648), 2147483647)), name)
@@ -854,36 +856,36 @@ else
 end
 
 --- Create new `TAG_Float` object.
--- @tparam number v Float value
--- @tparam[opt] string name Tag name
--- @return Tag class with `TAG_Float` type.
+--- @param v number Float value
+--- @param name string Tag name
+--- @return NBTTag tag_float
 function nbt.newFloat(v, name)
 	return TagClass.new(TAG_FLOAT, v, name)
 end
 
 --- Create new `TAG_Double` object.
--- @tparam number v Double float value
--- @tparam[opt] string name Tag name
--- @return Tag class with `TAG_Double` type.
+---@tparam number v Double float value
+---@tparam[opt] string name Tag name
+---@return NBTTag tag_double
 function nbt.newDouble(v, name)
 	return TagClass.new(TAG_DOUBLE, v, name)
 end
 
 --- Create new `TAG_String` object.
--- @tparam string v String value
--- @tparam[opt] string name Tag name
--- @return Tag class with `TAG_String` type.
+---@tparam string v String value
+---@tparam[opt] string name Tag name
+---@return Tag class with `TAG_String` type.
 function nbt.newString(v, name)
 	return TagClass.new(TAG_STRING, tostring(v), name)
 end
 
 --- Create new `TAG_Compound` object.
--- @tparam table value List of key-value pairs in table
--- @tparam[opt] string name description
--- @return Tag class with `TAG_List` type.
--- @warning If `TAG_*` class object is passed, this function will take
--- the ownership of that object and modify it, so make sure to clone the
--- object if needed.
+---@param value table<string, NBTTag|string> of key-value pairs in table
+---@param name string? name description
+---@return NBTTag tag_list with `TAG_List` type.
+---@warning If `TAG_*` class object is passed, this function will take
+--- the ownership of that object and modify it, so make sure to clone the
+--- object if needed.
 function nbt.newCompound(value, name)
 	local compound = {}
 
@@ -941,12 +943,12 @@ function nbt.newCompound(value, name)
 end
 
 --- Create new `TAG_List` object.
--- @tparam number typeID Valid NBT type ID (`nbt.TAG_*` constants) excluding `TAG_END`
--- @tparam table value List of values in table
--- @tparam[opt] string name description
--- @return Tag class with `TAG_List` type.
--- @warning If `TAG_*` class object is passed, this function will take
--- the ownership of that object, so make sure to clone the object if needed.
+--- @param typeID number Valid NBT type ID (`nbt.TAG_*` constants) excluding `TAG_END`
+--- @param value table List of values in table
+--- @param name? string description
+--- @return NBTTag tag_list
+--- @warning If `TAG_*` class object is passed, this function will take
+--- the ownership of that object, so make sure to clone the object if needed.
 function nbt.newList(typeID, value, name)
 	assert(isCorrectTypeID(typeID), "invalid type ID passed")
 
@@ -983,9 +985,9 @@ function nbt.newList(typeID, value, name)
 end
 
 --- Create new `TAG_Byte_Array` object.
--- @tparam table value List of values in table
--- @tparam[opt] string name description
--- @return Tag class with `TAG_Byte_Array` type.
+--- @param value table List of values in table
+--- @param name string? description
+--- @return NBTTag tag_byte_array
 function nbt.newByteArray(value, name)
 	local list = {}
 
@@ -1009,9 +1011,9 @@ function nbt.newByteArray(value, name)
 end
 
 --- Create new `TAG_Int_Array` object.
--- @tparam table value List of values in table
--- @tparam[opt] string name description
--- @return Tag class with `TAG_Int_Array` type.
+--- @param value table List of values in table
+--- @param name? string description
+--- @return NBTTag tag_int_array
 function nbt.newIntArray(value, name)
 	local list = {}
 
@@ -1181,9 +1183,9 @@ end
 
 --- Decode NBT data.
 -- This can either decode into Tag class or plain Lua table.
--- @tparam string|function input uncompressed NBT input data or function
+--- @param input string|function uncompressed NBT input data or function
 -- which returns uncompressed NBT data
--- @tparam string preservemode "tag" (default) returns full Tag class
+--- @param preservemode "tag"|"plain" "tag" (default) returns full Tag class
 -- or "plain" returns only plain Lua table
 function nbt.decode(input, preservemode)
 	if type(input) ~= "string" then
