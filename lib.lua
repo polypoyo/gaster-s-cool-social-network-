@@ -26,8 +26,17 @@ function Lib:receiveFromServer(client)
     if partial then
         self.partial = self.partial .. partial
     elseif response then
-        local ok, decodedResponse = pcall(nbt.decode, self.partial .. response, "plain")
+        -- TODO: find out why this ONE BYTE keeps getting dropped
+        local rawdata = self.partial .. response
+        if rawdata[1] ~= string.char(nbt.TAG_COMPOUND) then
+            rawdata = string.char(nbt.TAG_COMPOUND) .. rawdata
+        end
+        local ok, decodedResponse = pcall(nbt.decode, rawdata, "plain")
         if not ok then return end
+        if NETVERBOSE then
+            local tag = nbt.decode(rawdata, "tag")
+            print("\n[RECIEVE]\n" ..tag:__tostring(3))
+        end
         self.partial = ""
         return decodedResponse
     elseif err ~= "timeout" then

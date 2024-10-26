@@ -185,15 +185,14 @@ function Server:processClientMessage(client, data)
                 end
             end
         elseif subCommand == "chat" then
-            local id = message.uuid
             if #message.message == 0 then return end
-            local sender = self.players[id]
+            local sender = self:getPlayerFromClient(client)
             for _, reciever in pairs(self.players) do
                 
                 if reciever.map == sender.map then
                     reciever.client:send(NBT.newCompound{
                         command = "chat",
-                        uuid = id,
+                        uuid = self:getPlayerFromClient(client).uuid,
                         message = message.message
                     }:encode())
                 end
