@@ -12,6 +12,7 @@ Game.client = assert(
 
 local socket = Game.socket
 local json = JSON
+---@type NBTLibrary
 local nbt = libRequire("gasterscoolsocialnetwork","scripts.main.shared.nbt")
 
 local function sendToServer(client, message)
@@ -25,7 +26,8 @@ function Lib:receiveFromServer(client)
     if partial then
         self.partial = self.partial .. partial
     elseif response then
-        local decodedResponse = json.decode(self.partial .. response)
+        local ok, decodedResponse = pcall(nbt.decode, self.partial .. response, "plain")
+        if not ok then return end
         self.partial = ""
         return decodedResponse
     elseif err ~= "timeout" then

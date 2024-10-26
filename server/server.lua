@@ -27,10 +27,10 @@ end
 
 function Server:shutdown(message)
     for _, client in ipairs(self.clients) do
-        client:send(JSON.encode({
+        client:send(NBT.newCompound({
             command = "disconnect",
             message = message
-        }))
+        }):encode())
         client:close()
         self:removePlayer(client)
     end
@@ -105,15 +105,15 @@ function Server:sendUpdatesToClients()
             local filteredUpdates = {}
             for _, update in ipairs(updates[player.map]) do
                 if update.uuid ~= id then
-                    table.insert(filteredUpdates, update)
+                    table.insert((filteredUpdates), (update))
                 end
             end
 
-            local updateMessage = {
+            local updateMessage = NBT.newCompound{
                 command = "update",
-                players = filteredUpdates
+                players = NBT.newList(NBT.TAG_COMPOUND, filteredUpdates)
             }
-            player.client:send(JSON.encode(updateMessage) .. "\n")
+            player.client:send(updateMessage:encode())
         end
     end
 end
@@ -137,10 +137,10 @@ function Server:processClientMessage(client, data)
             lastUpdate = Socket.gettime()
         }
         print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. self.players[id].actor)
-        client:send(JSON.encode{
+        client:send(NBT.newCompound{
             command = "register",
             uuid = id
-        }.. "\n")
+        }:encode())
 
     elseif command == "world" then 
         if subCommand == "update" then
@@ -181,7 +181,7 @@ function Server:processClientMessage(client, data)
                         command = "RemoveOtherPlayersFromMap",
                         players = playersToRemove
                     }
-                    player.client:send(JSON.encode(removeMessage) .. "\n")
+                    player.client:send(NBT.newCompound(removeMessage):encode())
                 end
             end
         elseif subCommand == "chat" then
@@ -191,11 +191,11 @@ function Server:processClientMessage(client, data)
             for _, reciever in pairs(self.players) do
                 
                 if reciever.map == sender.map then
-                    reciever.client:send(JSON.encode({
+                    reciever.client:send(NBT.newCompound{
                         command = "chat",
                         uuid = id,
                         message = message.message
-                    }).."\n")
+                    }:encode())
                 end
             end
         end
