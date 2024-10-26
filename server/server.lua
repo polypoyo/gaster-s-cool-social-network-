@@ -105,7 +105,7 @@ function Server:sendUpdatesToClients()
             local filteredUpdates = {}
             for _, update in ipairs(updates[player.map]) do
                 if update.uuid ~= id then
-                    table.insert((filteredUpdates), (update))
+                    table.insert((filteredUpdates), NBT.newCompound(update))
                 end
             end
 
