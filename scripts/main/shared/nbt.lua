@@ -965,6 +965,8 @@ function nbt.newList(typeID, value, name)
 		constructorFunction = nbt.newLong
 	elseif typeID == TAG_STRING then
 		constructorFunction = nbt.newString
+	elseif typeID == TAG_COMPOUND then
+		constructorFunction = nbt.newCompound
 	end
 
 	for i, v in ipairs(value) do
