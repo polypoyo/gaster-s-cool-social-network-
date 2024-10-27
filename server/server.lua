@@ -25,12 +25,25 @@ function Server:getPlayerFromClient(client)
     end
 end
 
+---Sends data to the specified client, serializing if necessary.
+---@param client any -- The client to send to
+---@param data string|table
+function Server:sendClientMessage(client, data)
+    if client.client then -- Allow players to be passed here
+        client = client.client
+    end
+    if type(data) == "table" then
+        data = JSON.encode(data) .. "\n"
+    end
+    client:send(data)
+end
+
 function Server:shutdown(message)
     for _, client in ipairs(self.clients) do
-        client:send(JSON.encode({
+        self:sendClientMessage(client, {
             command = "disconnect",
             message = message
-        }))
+        })
         client:close()
         self:removePlayer(client)
     end
@@ -113,7 +126,7 @@ function Server:sendUpdatesToClients()
                 command = "update",
                 players = filteredUpdates
             }
-            player.client:send(JSON.encode(updateMessage) .. "\n")
+            self:sendClientMessage(player.client, updateMessage)
         end
     end
 end
@@ -137,10 +150,10 @@ function Server:processClientMessage(client, data)
             lastUpdate = Socket.gettime()
         }
         print("Player " .. message.username .. "(uuid=" .. id .. ") registered with actor: " .. self.players[id].actor)
-        client:send(JSON.encode{
+        self:sendClientMessage(client, {
             command = "register",
             uuid = id
-        }.. "\n")
+        })
 
     elseif command == "world" then 
         if subCommand == "update" then
@@ -181,7 +194,7 @@ function Server:processClientMessage(client, data)
                         command = "RemoveOtherPlayersFromMap",
                         players = playersToRemove
                     }
-                    player.client:send(JSON.encode(removeMessage) .. "\n")
+                    self:sendClientMessage(player.client, removeMessage)
                 end
             end
         elseif subCommand == "chat" then
@@ -191,11 +204,11 @@ function Server:processClientMessage(client, data)
             for _, reciever in pairs(self.players) do
                 
                 if reciever.map == sender.map then
-                    reciever.client:send(JSON.encode({
+                    self:sendClientMessage(reciever.client, {
                         command = "chat",
                         uuid = id,
                         message = message.message
-                    }).."\n")
+                    })
                 end
             end
         end
