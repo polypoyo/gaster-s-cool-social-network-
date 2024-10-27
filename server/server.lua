@@ -36,7 +36,7 @@ function Server:sendClientMessage(client, data)
         if data._value then
             data = data:encode()
         else
-            data = NBT.newCompound(data)
+            data = NBT.newCompound(data):encode()
         end
     end
     client:send(data)
