@@ -27,13 +27,17 @@ end
 
 ---Sends data to the specified client, serializing if necessary.
 ---@param client any -- The client to send to
----@param data string|table
+---@param data string|table|NBTTag
 function Server:sendClientMessage(client, data)
     if client.client then -- Allow players to be passed here
         client = client.client
     end
     if type(data) == "table" then
-        data = JSON.encode(data) .. "\n"
+        if data._value then
+            data = data:encode()
+        else
+            data = NBT.newCompound(data)
+        end
     end
     client:send(data)
 end
